@@ -68,8 +68,7 @@ map.on('load', function loadingData() {
     // create legend
     const legend = document.getElementById('legend');
     legend.innerHTML = "<b>Covid-19 Rates<br>(cases/population)</b><br><br>";
-
-
+    
     layers.forEach((layer, i) => {
         const color = colors[i];
         const item = document.createElement('div');
@@ -83,6 +82,7 @@ map.on('load', function loadingData() {
         item.appendChild(value);
         legend.appendChild(item);
     });
+   
 });
 
 map.on('mousemove', ({point}) => {
@@ -91,8 +91,11 @@ map.on('mousemove', ({point}) => {
     });
     document.getElementById('text-escription').innerHTML = covid.length ?
         `<h3>${covid[0].properties.county}</h3><p><strong><em>${covid[0].properties.rates}</strong> cases/population</em></p>` :
-        `<p>Hover over a county!</p>`;
+        `<p>Source: <a href="https://github.com/nytimes/covid-19-data/blob/43d32dde2f87bd4dafbb7d23f5d9e878124018b8/live/us-counties.csv">NYT</a>,
+                    <a href="https://data.census.gov/cedsci/table?g=0100000US.050000&d=ACS%205-Year%20Estimates%20Data%20Profiles&tid=ACSDP5Y2018.DP05&hidePreview=true">ACS</a>,
+                    <a href="https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html">Census</a></p>`;
 });
 }
 
 geojsonFetch();
+
