@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>COVID-19 Cases in the United States in 2020</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style2.css"/>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        /* the layout of the legend panel */
+        #legend {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 110px;
+            background: #fff;
+            margin-right: 20px;
+            margin-bottom: 40px;
+            padding: 10px 20px 10px 10px;
+            border-radius: 3px;
+            text-align: center;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        /* each line for a break */
+        .break {
+            position: relative;
+            margin: 0px;
+            padding: 0px;
+        }
+
+        /* basic style for a dot/circle */
+        .dot {
+            display: inline-block;
+            margin-top: 5px;
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+
+        /* the label for the dot */
+        .dot-label {
+            position: absolute;
+            top: 0;
+            right: 0;
+            font-style: italic;
+        }
+
+        /* the text color of a hyper link */
+        a {
+            color: black
+        }
+
+        #title {
+            position: absolute;
+            top: 0;
+            left: 0;
+            margin-top: 20px;
+            margin-left: 20px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 25pt;
+            color: black
+        }
+
+
+        #subtitle {
+            position: absolute;
+            top: 0;
+            left: 0;
+            margin-top: 70px;
+            margin-left: 190px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 15pt;
+            color: black
+        }
+
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <div id="legend"></div>
+    <div id="title">
+        COVID-19 Cases in the United States
+    </div>
+    <div id="subtitle">
+        In 2022
+    </div>
+    <script src="js/main2.js"></script>
+    <script>
+        mapboxgl.accessToken =
+            'pk.eyJ1IjoiamFrb2J6aGFvIiwiYSI6ImNpcms2YWsyMzAwMmtmbG5icTFxZ3ZkdncifQ.P9MBej1xacybKcDN_jehvw';
+        let map = new mapboxgl.Map({
+            container: 'map', // container ID
+            style: 'mapbox://styles/mapbox/light-v10',
+            zoom: 3, // starting zoom
+            center: [-100, 40] // starting center
+        });
+        
+        const grades = [10, 1000, 50000, 100000, 1000000], 
+            colors = ['rgb(218,218,235)', 'rgb(188,189,220)', 'rgb(158,154,200)', 'rgb(117,107,177)', 'rgb(84,39,143)'], 
+            radii = [3, 6, 9, 12, 15];
+        
+
+        map.on('load', () => {
+
+            map.addSource('covid_counts_2020', {
+                type: 'geojson',
+                data: 'assets/covid_counts_2020.geojson'
+            });
+
+            map.addLayer({
+                    'id': 'covid-counts-layer',
+                    'type': 'circle',
+                    'source': 'covid_counts_2020',
+                    'paint': {
+                        // increase the radius of the circle as the zoom level and dbh value increases
+                        'circle-radius': {
+                            'property': 'cases',
+                            'stops': [
+                                [{
+                                    zoom: 3,
+                                    value: grades[0]
+                                }, radii[0]],
+                                [{
+                                    zoom: 3,
+                                    value: grades[1]
+                                }, radii[1]],
+                                [{
+                                    zoom: 3,
+                                    value: grades[2]
+                                }, radii[2]],
+                                [{
+                                    zoom: 3,
+                                    value: grades[3]
+                                }, radii[3]],
+                                [{
+                                    zoom: 3,
+                                    value: grades[4]
+                                }, radii[4]]
+                            ]
+                        },
+                        'circle-color': {
+                            'property': 'cases',
+                            'stops': [
+                                [grades[0], colors[0]],
+                                [grades[1], colors[1]],
+                                [grades[2], colors[2]],
+                                [grades[3], colors[3]],
+                                [grades[4], colors[4]]
+                            ]
+                        },
+                        'circle-stroke-color': 'grey',
+                        'circle-stroke-width': 1,
+                        'circle-opacity': 0.6
+                    }
+                }
+            );
+            // click on tree to view magnitude in a popup
+            map.on('click', 'covid-counts-point', (event) => {
+                new mapboxgl.Popup()
+                    .setLngLat(event.features[0].geometry.coordinates)
+                    .setHTML(`<strong>County:</strong> ${event.features[0].properties.county} <br> <strong>Cases:</strong> ${event.features[0].properties.cases}`)
+                    .addTo(map);
+            });
+
+
+
+        });
+
+        // create legend object, it will anchor to the div element with the id legend.
+        const legend = document.getElementById('legend');
+
+        //set up legend grades and labels
+        var labels = ['<strong>Size</strong>'], vbreak;
+        //iterate through grades and create a scaled circle and label for each
+        for (var i = 0; i < grades.length; i++) {
+            vbreak = grades[i];
+            // you need to manually adjust the radius of each dot on the legend 
+            // in order to make sure the legend can be properly referred to the dot on the map.
+            dot_radii = 2 * radii[i];
+            labels.push(
+                '<p class="break"><i class="dot" style="background:' + colors[i] + '; width: ' + dot_radii +
+                'px; height: ' +
+                dot_radii + 'px; "></i> <span class="dot-label" style="top: ' + dot_radii / 2 + 'px;">' + vbreak +
+                '</span></p>');
+
+        }
+    </script>
+
+</body>
+
+</html>
